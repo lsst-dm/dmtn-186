@@ -1,0 +1,9 @@
+% bibentry template for lsst.bib in https://github.com/lsst/lsst-texmf/blob/master/texmf/bibtex/bib/lsst.bib
+
+@DocuShare{DMTN-186,
+   author = { Gregory Dubois-Felsmann },
+    title = {Conceptual design of a IVOA-service-availability service and associated UI},
+     year = 2021,
+    month = Apr,
+   handle = {DMTN-186},
+      url = {https://dmtn-186.lsst.io } }
