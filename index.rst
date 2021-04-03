@@ -245,7 +245,7 @@ availability message.
 This is because we are using existing server implementations for some of our
 services, and they already support this interface.
 Any ``note`` elements returned should be passed through to the external caller,
-as the schema supports multiple ``note``s.
+as the schema supports multiple ``note`` elements.
 If the service returns ``upSince``, ``downAt``, or ``backAt``, TBD logic would
 be required to harmonize these with the central service's ideas of these.
 (This may be unlikely to arise in practice; these elements are not returned by
