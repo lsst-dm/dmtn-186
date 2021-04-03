@@ -54,7 +54,7 @@ The specific content of the response from the ``/availability`` endpoint of a VO
     - ``backAt`` - the instant at which the service is scheduled to become available again after down time;
     - ``note`` - textual note, e.g. explaining the reason for unavailability.
 
-    The elements ``upSince``, ``downAt``, ``backAt`` and ``note`` are optional.
+    The elements ``upSince``, ``downAt``, ``backAt``, and ``note`` are optional.
     The ``available`` element is mandatory.
     There may be more than one ``note`` element.
 
