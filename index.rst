@@ -54,7 +54,7 @@ The specific content of the response from the ``/availability`` endpoint of a VO
     - ``backAt`` - the instant at which the service is scheduled to become available again after down time;
     - ``note`` - textual note, e.g. explaining the reason for unavailability.
 
-    The elements ``upSince``, downAt``, ``backAt`` and ``note`` are optional.
+    The elements ``upSince``, ``downAt``, ``backAt`` and ``note`` are optional.
     The ``available`` element is mandatory.
     There may be more than one ``note`` element.
 
@@ -331,12 +331,17 @@ Dashboard
 ---------
 
 This proposal envisions that the central availability service would be used to
-construct a status dashboard for all the RSP services.
+construct a status dashboard (perhaps based on up/down badges, "Christmas tree"-style)
+for all the RSP services, IVOA or not.
 This could, but need not, utilize the XML responses; it is conceivable that a
 Rubin-private response format could be used to populate the dashboard.
+This would be necessary if, for instance, more Rubin-specific statuses were to be
+reported (e.g., "currently rate-limiting queries").
 
-Note, however, that any external client using IVOA standards could also 
-construct a basic dashboard for the RSP, which seems like a positive feature.
+The dashboard would naturally be integrated into the currently-being-designed
+RSP home page, and would share its visual vocabulary, including the project's
+iconography, exposure of the usual login/session/profile/logout menu in the 
+upper right, and so on.
 
 Since such a dashboard would *per se* incorporate a list of all available API
 services, it might also be a good jumping-off point for additional information
@@ -344,6 +349,11 @@ on each service.
 This might include both a user manual and an OpenAPI/Swagger-style "try out
 this service" page.
 (The author would very much like to see such a capability in the long run.)
+
+Note that any external client using IVOA standards could also 
+construct a basic dashboard for the RSP, which seems like a positive feature.
+External purely standards-based clients could either use the IVOA Registry to
+find a list of published services to query.
 
 
 ..
