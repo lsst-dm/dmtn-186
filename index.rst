@@ -203,14 +203,16 @@ or "down for rollout of DR3 2026-10-09" could be included in the ``note``.
 The service would need to be able to format this information in the VOSI-prescribed
 (very simple) XML format.
 
-Since the author is aware of the existence of anti-XML attitudes in the RSP
-developer community, we note that the central availability service could be
-designed to respond both in JSON and XML.
-One could imagine 
-``https://(address)/api/central-availability/(service-name)``
-responding in JSON and
-``https://(address)/api/central-availability/(service-name)/xml``
-in XML, with the per-service availability endpoints redirected to the latter.
+To facilitate the development of additional internal tooling, it may be useful
+to provide the option of returning the status in JSON upon request, as many
+developers prefer to work with JSON responses.
+We propose that the central service respect the ``Accept:`` header and allow
+a client to specify ``application/json`` in order to obtain the status in JSON format.
+The central service would provide an IVOA-compliant response in the absence of an
+``Accept:`` header or if ``application/xml`` is specified.
+A JSON response could parallel the IVOA XML schema almost exactly; the only
+subtlety would be to retain an equivalent to the ability to have multiple
+``note`` elements.
 
 This level of functionality alone, without any of the following components,
 would already be useful.
