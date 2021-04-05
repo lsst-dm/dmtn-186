@@ -185,8 +185,10 @@ Basic /availability XML retrieval from Kubernetes controller
 The core element of the proposal is a service which can be configured with
 a list of services to represent, and the logic necessary to query the
 Kubernetes controller for the present state of a service and translate that
-into the ``available`` and ``upSince`` attributes of the VOSI-Availability
-data model.
+into appropriate attributes of the VOSI-Availability data model.
+The provision of the ``available`` attribute is essential.
+If the ``upSince`` attribute can be provided straightforwardly based on
+information already available and readily queried from Kubernetes, it should be.
 
 If a centralized repository of information about planned outages is developed
 in order to support messaging through the new RSP home page and framing,
