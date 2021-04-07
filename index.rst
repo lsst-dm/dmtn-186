@@ -118,7 +118,7 @@ potentially conditioned on the identity of the requesting user, and replying wit
 an HTTP 429 status.
 
 The Kubernetes controller is likely to be able to report information relevant to
-the reporting of the ``upSince` time stamps in the VOSI specification.
+the reporting of the ``upSince`` time stamps in the VOSI specification.
 
 Planned downtime messaging
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
