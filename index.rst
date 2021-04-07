@@ -1,3 +1,5 @@
+:tocdepth: 1
+
 .. note::
 
    **This technote is not yet published.**
@@ -413,8 +415,6 @@ References
    this repo's README for more info.
 
    Feel free to delete this instructional comment.
-
-:tocdepth: 1
 
 .. Please do not modify tocdepth; will be fixed when a new Sphinx theme is shipped.
 
