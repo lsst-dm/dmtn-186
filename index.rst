@@ -16,7 +16,8 @@ Three strands come together in this proposal:
 most users of contemporary web-based service environments expect something like a status page
 for the set of services run by a provider;
 all contemporary IVOA standards either require as a mandatory element the provision of
-an ``/availability`` endpoint for each service, returning a standardized response; and
+a "VOSI-availability" endpoint (often found at ``/availability`` below the main service endpoint)
+for each service, returning a standardized response; and
 because we run all the RSP services in a uniformly-managed Kubernetes environment,
 basic information about service availability is available centrally.
 
@@ -35,14 +36,11 @@ This is a mandatory component of the VOSI standard.
 The intent of this is to make it possible for service status to be reported uniformly,
 facilitating the writing of client code that works across a range of services.
 
-.. [IVOA-VOSI2017] Matthew Graham et al., 2017. IVOA Support Interfaces, Version 1.1.
-                   IVOA Recommendation 2017-05-24, Grid and Web Services Working Group.
-                   `<https://ivoa.net/documents/VOSI/20170524/REC-VOSI-1.1.html>`__
 
 Availability XML response
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The specific content of the response from the ``/availability`` endpoint of a VOSI-based service is described in the standard as follows:
+The specific content of the response from the VOSI-availability endpoint of a VOSI-based service is described in the standard as follows:
 
     This interface indicates whether the service is operable and the reliability of the service for extended and scheduled requests.
     The availability shall be represented as an XML document in which the root element is http://www.ivoa.net/xml/Availability/v1.0#availability.
@@ -82,16 +80,18 @@ The problem of self-reporting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Superficially implied in some of the discussions of the VOSI endpoints in higher-level
-IVOA standards such as TAP is that the ``/availability`` endpoint **for** a service is an
+IVOA standards such as TAP is that the VOSI-availability endpoint **for** a service is an
 endpoint **of** the service, i.e., provided by the same system component that provides
-the substantive service.
+the substantive service, perhaps at ``/availability`` under the service.
+(It is not at all *required* to be at that endpoint, and services in the Registry can
+have a completely unrelated endpoint registered for VOSI-availability.)
 
 The VOSI statement that when "reporting availability, the service should do a good check 
 on its underlying parts to see if it is still operational and not just make a simple
 return from a web server" emphasizes the role of the service itself in this respect.
 However, a service can be down for reasons other than the unavailability of a lower-level
 service on which it depends, and these cases bring the contradictory suggestion that a
-service somehow successfully respond to an ``/availability`` query even when it is
+service still somehow successfully respond to a VOSI-availability query even when it is
 otherwise down.
 
 In this note, we propose a two-level mechanism: a primary level in which a robust
@@ -128,6 +128,16 @@ This mechanism is likely to be able to hold information that would be relevant t
 the reporting of the ``downAt`` and ``backAt`` time stamps in the VOSI specification,
 for planned outages.
 
+Current State
+-------------
+
+We presently operate two IVOA-compatible TAP services: the main TAP service which accesses Qserv for catalog data,
+and an experimental ObsTAP service.
+These services are both based on the OpenCADC TAP code base, and they provide ``/availability``
+endpoints which we expose externally via Kubernetes ingress rules.
+Following the IVOA recommendation, we do not apply authentication to access to these endpoints.
+See, for example, the `main IDF TAP service's VOSI-availability endpoint <https://data.lsst.cloud/api/tap/availability>`__.
+
 
 Proposal
 ========
@@ -140,7 +150,7 @@ and SODA, but could usefully be extended to all public-facing RSP services, even
 ones for which VOSI is otherwise irrelevant, e.g., JupyterLab and Firefly.
 
 This service would have a REST interface along the lines of
-``https://(address)/api/central-availability/(service-name)`` .
+``https://(availability-service-hostname)/api/status/(service-name)`` .
 
 This service would return the prescribed XML response for every RSP service,
 by default based only on information known to the Kubernetes controller and on
@@ -178,6 +188,7 @@ writing a lightweight "dashboard" / "Christmas tree" status display for all
 the components of the RSP.
 
 The proposal includes the following specific elements:
+
 
 Basic /availability XML retrieval from Kubernetes controller
 ------------------------------------------------------------
@@ -219,6 +230,11 @@ subtlety would be to retain an equivalent to the ability to have multiple
 This level of functionality alone, without any of the following components,
 would already be useful.
 
+We would continue to provide ingress to the existing service-specific VOSI-availability
+endpoints, such as those for the TAP services, at least until the central availability
+service came online.
+
+
 Layered call to service-specific availability endpoint
 ------------------------------------------------------
 
@@ -255,7 +271,7 @@ be required to harmonize these with the central service's ideas of these.
 (This may be unlikely to arise in practice; these elements are not returned by
 most open-source IVOA server implementations.)
 
-**Alternate query option**
+**Alternate lightweight call-through option**
 
 As a configurable option, the call-through may also be designed to recognize
 an alternate, much simpler, query response.
@@ -287,25 +303,43 @@ status information and enabling internal alerts if the central service thinks a
 service is up but it reports itself as non-functional), or only in response to an
 external request.
 
+
 Ingress configuration and possible directory service
 ----------------------------------------------------
 
 It is proposed that ``https://(RSP-external-address)/api/X/availability``, the normal
 endpoint for a VOSI service ``X``, be redirected via ingress rule to 
-``https://(availability-service-address)/api/central-availability/X``.
+``https://(availability-service-hostname)/api/status/X``.
 
 This proposal expresses a preference for, but does not insist on, making the
 central availability service directly available externally at a single endpoint,
 exposing the service-specific endpoints below that externally as well --
 in addition to satisfying the required per-service VOSI-availability endpoints
 by redirecting them to the appropriate URL.
-That is, ``(availability-service-address)`` might be the same as ``(RSP-external-address)``.
+That is, ``(availability-service-hostname)`` might be the same as ``(RSP-external-address)``.
 
 If so, then the possibility appears of allowing the base URL
-``https://(availability-service-address)/api/central-availability``
+``https://(availability-service-hostname)/api/status``
 to serve as a REST-standard directory of services, returning a list of the
 valid endpoints one level down.
-This proposal does not take a position on that.
+This proposal does not currently take a position on that.
+
+The IVOA standards do permit the VOSI-availability endpoints for our service to be
+directly registered to be those of the central availability service.
+This would avoid the need for redirections from ``/api/X/availability`` to ``/api/status/X``.
+However, the use of an ``X/availability`` pattern is so common in the IVOA landscape
+that users, and naive client implementations, are likely to attempt to query the "naive"
+endpoints.
+For this reason, it is proposed to maintain the "naive" pattern via appropriate ingress rules.
+
+NB: The specific patterns here are referenced to the current URL patterns for RSP
+deployment ("Option 1" in :dmtn:`076`).
+If we change to Option 2 or some other scheme, appropriate changes would have to be
+applied to the present proposal.
+
+While the above assumes that the central-availability service would be located, within our service pathname scheme, under the "API Aspect", it may be worth considering promoting it to the top level of the tree as well, as a peer to ``/api``, ``/nb``, and ``/portal``.
+This should be evaluated during review of the proposal.
+
 
 A&A considerations
 ------------------
@@ -313,23 +347,18 @@ A&A considerations
 The VOSI standard states "the availability binding[s] must be available to
 anonymous requests".
 
-In the "naive" implementation model where each service provides its own externally
-accessible availability endpoint, this places each service in the position of 
-handling external data from unauthenticated clients directly.
-This increases the attack surface of the RSP and might require more careful
-service-by-service vetting of their response to availability queries.
-
-In the proposed model, the unauthenticated ``/availability`` requests are all
+In the proposed model, the unauthenticated VOSI-availability requests are all
 handled by the central service.
-No individual service would be responsible for processing any unauthenticated
+After the completion of the transition from the current situation,
+no individual service would be responsible for processing any unauthenticated
 availability request URLs.
 For an unauthenticated external request, the central service's call-through to
 the specific service, if implemented, might use a non-privileged internal
 service identity to authenticate the call-through request.
-For an authenticated external request, that identity could simply be passed
-through.
+For an authenticated external request, the user's identity could simply be passed through.
 This design allows for possible future implementations where the call-through
 response is customized to a specific user.
+
 
 Dashboard
 ---------
@@ -339,8 +368,8 @@ construct a status dashboard (perhaps based on up/down badges, "Christmas tree"-
 for all the RSP services, IVOA or not.
 This could, but need not, utilize the XML responses; it is conceivable that a
 Rubin-private response format could be used to populate the dashboard.
-This would be necessary if, for instance, more Rubin-specific statuses were to be
-reported (e.g., "currently rate-limiting queries").
+This would be necessary in any event if, for instance, more Rubin-specific statuses
+were to be reported (e.g., "currently rate-limiting queries").
 
 The dashboard would naturally be integrated into the currently-being-designed
 RSP home page, and would share its visual vocabulary, including the project's
@@ -356,8 +385,16 @@ this service" page.
 
 Note that any external client using IVOA standards could also 
 construct a basic dashboard for the RSP, which seems like a positive feature.
-External purely standards-based clients could either use the IVOA Registry to
-find a list of published services to query.
+External purely standards-based clients could use the IVOA Registry to
+find a list of published RSP services to query.
+
+
+References
+==========
+
+.. [IVOA-VOSI2017] Matthew Graham et al., 2017. IVOA Support Interfaces, Version 1.1.
+                   IVOA Recommendation 2017-05-24, Grid and Web Services Working Group.
+                   `<https://ivoa.net/documents/VOSI/20170524/REC-VOSI-1.1.html>`__
 
 
 ..
